@@ -3,14 +3,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: edge-gateway
-  labels: { app: edge-gateway, app.kubernetes.io/part-of: agency }
+  labels: { app: edge-gateway, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
 spec:
   replicas: 1
   strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
   selector: { matchLabels: { app: edge-gateway } }
   template:
     metadata:
-      labels: { app: edge-gateway, app.kubernetes.io/part-of: agency }
+      labels: { app: edge-gateway, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
@@ -57,14 +57,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-gateway
-  labels: { app: model-gateway, app.kubernetes.io/part-of: agency }
+  labels: { app: model-gateway, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
 spec:
   replicas: 1
   strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
   selector: { matchLabels: { app: model-gateway } }
   template:
     metadata:
-      labels: { app: model-gateway, app.kubernetes.io/part-of: agency }
+      labels: { app: model-gateway, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
@@ -116,14 +116,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: topic-ev-research
-  labels: { app: topic-ev-research, app.kubernetes.io/part-of: agency }
+  labels: { app: topic-ev-research, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
 spec:
   replicas: 1
   strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
   selector: { matchLabels: { app: topic-ev-research } }
   template:
     metadata:
-      labels: { app: topic-ev-research, app.kubernetes.io/part-of: agency }
+      labels: { app: topic-ev-research, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
@@ -170,14 +170,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: topic-product-finder
-  labels: { app: topic-product-finder, app.kubernetes.io/part-of: agency }
+  labels: { app: topic-product-finder, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
 spec:
   replicas: 1
   strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
   selector: { matchLabels: { app: topic-product-finder } }
   template:
     metadata:
-      labels: { app: topic-product-finder, app.kubernetes.io/part-of: agency }
+      labels: { app: topic-product-finder, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
@@ -224,14 +224,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: topic-finance
-  labels: { app: topic-finance, app.kubernetes.io/part-of: agency }
+  labels: { app: topic-finance, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
 spec:
   replicas: 1
   strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
   selector: { matchLabels: { app: topic-finance } }
   template:
     metadata:
-      labels: { app: topic-finance, app.kubernetes.io/part-of: agency }
+      labels: { app: topic-finance, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }

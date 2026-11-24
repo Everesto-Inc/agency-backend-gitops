@@ -3,8 +3,8 @@
   "port": 8000,
   "memoryMi": 1024,
   "replicas": 1,
-  "healthPath": "/health",
-  "publicUrl": false,
+  "healthPath": "/health/ready",
+  "publicUrl": true,
   "redis": true,
   "config": [],
   "secrets": [

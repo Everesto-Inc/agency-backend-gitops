@@ -1,0 +1,14 @@
+# https://agency-backend-dev.everesto.live — Cloudflare → alb (TLS *.everesto.live) → in-cluster Traefik → edge-gateway (the public API)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agency-backend
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: agency-backend-dev.everesto.live
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: edge-gateway, port: { number: 8000 } } }

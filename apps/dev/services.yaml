@@ -1,0 +1,274 @@
+# Agency on the control-plane — 6 services. Edited by hand (platform exception); see README.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-gateway
+  labels: { app: edge-gateway, app.kubernetes.io/part-of: agency }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
+  selector: { matchLabels: { app: edge-gateway } }
+  template:
+    metadata:
+      labels: { app: edge-gateway, app.kubernetes.io/part-of: agency }
+    spec:
+      nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: ghcr.io/everesto-inc/agency-edge-gateway
+          ports: [{ name: http, containerPort: 8000 }]
+          env:
+            - { name: SERVICE_NAME, value: "edge-gateway" }
+            - { name: ENVIRONMENT, value: "dev" }
+            - { name: LOG_LEVEL, value: "INFO" }
+            - { name: LOG_JSON, value: "true" }
+            - { name: CONFIG_DIR, value: "/app/config" }
+            - { name: PROMPTS_DIR, value: "/app/prompts" }
+            - { name: MODEL_GATEWAY_URL, value: "http://model-gateway:8000" }
+            - { name: HOME, value: "/tmp" }
+            - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: DATABASE_URL } } }
+            - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_URL } } }
+            - { name: REDIS_KEY_PREFIX, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_KEY_PREFIX } } }
+            - { name: JWT_SECRET_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: JWT_SECRET_KEY } } }
+            - { name: CORS_ALLOWED_ORIGINS, valueFrom: { secretKeyRef: { name: agency-backend, key: CORS_ALLOWED_ORIGINS } } }
+            - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: EDGE_GATEWAY_SECRET } } }
+          resources:
+            requests: { cpu: 50m, memory: 192Mi }
+            limits: { memory: 384Mi }
+          startupProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 3, failureThreshold: 60 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 20 }
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 10, failureThreshold: 3 }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: { sizeLimit: 256Mi } }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge-gateway
+spec:
+  selector: { app: edge-gateway }
+  ports: [{ name: http, port: 8000, targetPort: http }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-gateway
+  labels: { app: model-gateway, app.kubernetes.io/part-of: agency }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
+  selector: { matchLabels: { app: model-gateway } }
+  template:
+    metadata:
+      labels: { app: model-gateway, app.kubernetes.io/part-of: agency }
+    spec:
+      nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: ghcr.io/everesto-inc/agency-model-gateway
+          ports: [{ name: http, containerPort: 8000 }]
+          env:
+            - { name: SERVICE_NAME, value: "model-gateway" }
+            - { name: ENVIRONMENT, value: "dev" }
+            - { name: LOG_LEVEL, value: "INFO" }
+            - { name: LOG_JSON, value: "true" }
+            - { name: CONFIG_DIR, value: "/app/config" }
+            - { name: PROMPTS_DIR, value: "/app/prompts" }
+            - { name: MODEL_GATEWAY_URL, value: "http://model-gateway:8000" }
+            - { name: HOME, value: "/tmp" }
+            - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: DATABASE_URL } } }
+            - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_URL } } }
+            - { name: REDIS_KEY_PREFIX, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_KEY_PREFIX } } }
+            - { name: JWT_SECRET_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: JWT_SECRET_KEY } } }
+            - { name: GEMINI_API_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: GEMINI_API_KEY } } }
+            - { name: EDGE_GATEWAY_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: EDGE_GATEWAY_SECRET } } }
+            - { name: EV_RESEARCH_GATEWAY_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: EV_RESEARCH_GATEWAY_SECRET } } }
+            - { name: PRODUCT_FINDER_GATEWAY_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: PRODUCT_FINDER_GATEWAY_SECRET } } }
+            - { name: FINANCE_GATEWAY_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: FINANCE_GATEWAY_SECRET } } }
+            - { name: QUALITY_GATEWAY_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: QUALITY_GATEWAY_SECRET } } }
+            - { name: MODEL_GATEWAY_CLIENTS, value: "edge=$(EDGE_GATEWAY_SECRET),ev_research=$(EV_RESEARCH_GATEWAY_SECRET),product_finder=$(PRODUCT_FINDER_GATEWAY_SECRET),finance=$(FINANCE_GATEWAY_SECRET),quality=$(QUALITY_GATEWAY_SECRET)" }
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 512Mi }
+          startupProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 3, failureThreshold: 60 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 20 }
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 10, failureThreshold: 3 }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: { sizeLimit: 256Mi } }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-gateway
+spec:
+  selector: { app: model-gateway }
+  ports: [{ name: http, port: 8000, targetPort: http }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: topic-ev-research
+  labels: { app: topic-ev-research, app.kubernetes.io/part-of: agency }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
+  selector: { matchLabels: { app: topic-ev-research } }
+  template:
+    metadata:
+      labels: { app: topic-ev-research, app.kubernetes.io/part-of: agency }
+    spec:
+      nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: ghcr.io/everesto-inc/agency-topic-ev-research
+          ports: [{ name: http, containerPort: 8000 }]
+          env:
+            - { name: SERVICE_NAME, value: "topic-ev-research" }
+            - { name: ENVIRONMENT, value: "dev" }
+            - { name: LOG_LEVEL, value: "INFO" }
+            - { name: LOG_JSON, value: "true" }
+            - { name: CONFIG_DIR, value: "/app/config" }
+            - { name: PROMPTS_DIR, value: "/app/prompts" }
+            - { name: MODEL_GATEWAY_URL, value: "http://model-gateway:8000" }
+            - { name: HOME, value: "/tmp" }
+            - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: DATABASE_URL } } }
+            - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_URL } } }
+            - { name: REDIS_KEY_PREFIX, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_KEY_PREFIX } } }
+            - { name: JWT_SECRET_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: JWT_SECRET_KEY } } }
+            - { name: TAVILY_API_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: TAVILY_API_KEY } } }
+            - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: EV_RESEARCH_GATEWAY_SECRET } } }
+          resources:
+            requests: { cpu: 50m, memory: 320Mi }
+            limits: { memory: 640Mi }
+          startupProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 3, failureThreshold: 60 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 20 }
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 10, failureThreshold: 3 }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: { sizeLimit: 256Mi } }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: topic-ev-research
+spec:
+  selector: { app: topic-ev-research }
+  ports: [{ name: http, port: 8000, targetPort: http }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: topic-product-finder
+  labels: { app: topic-product-finder, app.kubernetes.io/part-of: agency }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
+  selector: { matchLabels: { app: topic-product-finder } }
+  template:
+    metadata:
+      labels: { app: topic-product-finder, app.kubernetes.io/part-of: agency }
+    spec:
+      nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: ghcr.io/everesto-inc/agency-topic-product-finder
+          ports: [{ name: http, containerPort: 8000 }]
+          env:
+            - { name: SERVICE_NAME, value: "topic-product-finder" }
+            - { name: ENVIRONMENT, value: "dev" }
+            - { name: LOG_LEVEL, value: "INFO" }
+            - { name: LOG_JSON, value: "true" }
+            - { name: CONFIG_DIR, value: "/app/config" }
+            - { name: PROMPTS_DIR, value: "/app/prompts" }
+            - { name: MODEL_GATEWAY_URL, value: "http://model-gateway:8000" }
+            - { name: HOME, value: "/tmp" }
+            - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: DATABASE_URL } } }
+            - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_URL } } }
+            - { name: REDIS_KEY_PREFIX, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_KEY_PREFIX } } }
+            - { name: JWT_SECRET_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: JWT_SECRET_KEY } } }
+            - { name: TAVILY_API_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: TAVILY_API_KEY } } }
+            - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: PRODUCT_FINDER_GATEWAY_SECRET } } }
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 512Mi }
+          startupProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 3, failureThreshold: 60 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 20 }
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 10, failureThreshold: 3 }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: { sizeLimit: 256Mi } }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: topic-product-finder
+spec:
+  selector: { app: topic-product-finder }
+  ports: [{ name: http, port: 8000, targetPort: http }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: topic-finance
+  labels: { app: topic-finance, app.kubernetes.io/part-of: agency }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }   # no surge pod: the namespace quota has no room for two copies
+  selector: { matchLabels: { app: topic-finance } }
+  template:
+    metadata:
+      labels: { app: topic-finance, app.kubernetes.io/part-of: agency }
+    spec:
+      nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: ghcr.io/everesto-inc/agency-topic-finance
+          ports: [{ name: http, containerPort: 8000 }]
+          env:
+            - { name: SERVICE_NAME, value: "topic-finance" }
+            - { name: ENVIRONMENT, value: "dev" }
+            - { name: LOG_LEVEL, value: "INFO" }
+            - { name: LOG_JSON, value: "true" }
+            - { name: CONFIG_DIR, value: "/app/config" }
+            - { name: PROMPTS_DIR, value: "/app/prompts" }
+            - { name: MODEL_GATEWAY_URL, value: "http://model-gateway:8000" }
+            - { name: HOME, value: "/tmp" }
+            - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: DATABASE_URL } } }
+            - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_URL } } }
+            - { name: REDIS_KEY_PREFIX, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_KEY_PREFIX } } }
+            - { name: JWT_SECRET_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: JWT_SECRET_KEY } } }
+            - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: FINANCE_GATEWAY_SECRET } } }
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 512Mi }
+          startupProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 3, failureThreshold: 60 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 20 }
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 10, failureThreshold: 3 }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: { sizeLimit: 256Mi } }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: topic-finance
+spec:
+  selector: { app: topic-finance }
+  ports: [{ name: http, port: 8000, targetPort: http }]

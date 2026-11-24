@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: agency-backend
-spec:
-  selector: { app: agency-backend }
-  ports: [{ port: 80, targetPort: 8000 }]

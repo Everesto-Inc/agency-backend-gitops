@@ -4,14 +4,14 @@ namespace: dev-agency
 resources: [externalsecret.yaml, jobs.yaml, services.yaml, cronjobs.yaml, ingress.yaml]   # namespace, quota, network policy: platform (gitops-backstage)
 images:   # all 6 move together: same commit of agency-backend → same tag — then Sync in ArgoCD
   - name: ghcr.io/everesto-inc/agency-edge-gateway
-    newTag: sha-a39a6d2
+    newTag: sha-3450e17
   - name: ghcr.io/everesto-inc/agency-model-gateway
-    newTag: sha-a39a6d2
+    newTag: sha-3450e17
   - name: ghcr.io/everesto-inc/agency-topic-ev-research
-    newTag: sha-a39a6d2
+    newTag: sha-3450e17
   - name: ghcr.io/everesto-inc/agency-topic-product-finder
-    newTag: sha-a39a6d2
+    newTag: sha-3450e17
   - name: ghcr.io/everesto-inc/agency-topic-finance
-    newTag: sha-a39a6d2
+    newTag: sha-3450e17
   - name: ghcr.io/everesto-inc/agency-quality-worker
-    newTag: sha-a39a6d2
+    newTag: sha-3450e17

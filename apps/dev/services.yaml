@@ -29,6 +29,7 @@ spec:
             - { name: PROMPTS_DIR, value: "/app/prompts" }
             - { name: MODEL_GATEWAY_URL, value: "http://model-gateway:8000" }
             - { name: HOME, value: "/tmp" }
+            - { name: CLIENT_IP_HEADER, value: "CF-Connecting-IP" }
             - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: DATABASE_URL } } }
             - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_URL } } }
             - { name: REDIS_KEY_PREFIX, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_KEY_PREFIX } } }

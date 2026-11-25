@@ -65,3 +65,54 @@ spec:
           securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
           volumeMounts: [{ name: tmp, mountPath: /tmp }]
       volumes: [{ name: tmp, emptyDir: { sizeLimit: 64Mi } }]
+---
+# Admins (role admin, plan pro): every ADMIN<n>_EMAIL + ADMIN<n>_PASSWORD pair in Infisical, n = 1..9. Add one = add the two secrets + Sync (no change here). Emails never in this public repo. Idempotent: an existing admin keeps its password.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: agency-admins
+  annotations:
+    argocd.argoproj.io/hook: Sync                       # runs on every Sync, before the apps (wave -1)
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
+      automountServiceAccountToken: false
+      containers:
+        - name: job
+          image: ghcr.io/everesto-inc/agency-edge-gateway
+          command: ["sh", "-c", "set -e; done_=''; for i in 1 2 3 4 5 6 7 8 9; do eval \"e=\\${ADMIN${i}_EMAIL:-}\"; eval \"p=\\${ADMIN${i}_PASSWORD:-}\"; [ -n \"$e\" ] || continue; ADMIN_PASSWORD=\"$p\" python -m edge_gateway.cli create-admin \"$e\"; done_=\"$done_ $i\"; done; echo \"admin slots checked:${done_:- none}\""]
+          env:
+            - { name: ENVIRONMENT, value: "dev" }
+            - { name: HOME, value: "/tmp" }
+            - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: DATABASE_URL } } }
+            - { name: ADMIN1_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN1_EMAIL, optional: true } } }
+            - { name: ADMIN1_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN1_PASSWORD, optional: true } } }
+            - { name: ADMIN2_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN2_EMAIL, optional: true } } }
+            - { name: ADMIN2_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN2_PASSWORD, optional: true } } }
+            - { name: ADMIN3_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN3_EMAIL, optional: true } } }
+            - { name: ADMIN3_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN3_PASSWORD, optional: true } } }
+            - { name: ADMIN4_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN4_EMAIL, optional: true } } }
+            - { name: ADMIN4_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN4_PASSWORD, optional: true } } }
+            - { name: ADMIN5_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN5_EMAIL, optional: true } } }
+            - { name: ADMIN5_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN5_PASSWORD, optional: true } } }
+            - { name: ADMIN6_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN6_EMAIL, optional: true } } }
+            - { name: ADMIN6_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN6_PASSWORD, optional: true } } }
+            - { name: ADMIN7_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN7_EMAIL, optional: true } } }
+            - { name: ADMIN7_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN7_PASSWORD, optional: true } } }
+            - { name: ADMIN8_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN8_EMAIL, optional: true } } }
+            - { name: ADMIN8_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN8_PASSWORD, optional: true } } }
+            - { name: ADMIN9_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN9_EMAIL, optional: true } } }
+            - { name: ADMIN9_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: ADMIN9_PASSWORD, optional: true } } }
+          resources:
+            requests: { cpu: 25m, memory: 64Mi }
+            limits: { memory: 256Mi }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: { sizeLimit: 64Mi } }]

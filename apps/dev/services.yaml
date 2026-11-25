@@ -36,6 +36,12 @@ spec:
             - { name: JWT_SECRET_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: JWT_SECRET_KEY } } }
             - { name: CORS_ALLOWED_ORIGINS, valueFrom: { secretKeyRef: { name: agency-backend, key: CORS_ALLOWED_ORIGINS } } }
             - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: EDGE_GATEWAY_SECRET } } }
+            - { name: S3_REGION, value: "eu-paris-1" }
+            - { name: S3_BUCKET, value: "dev-agency-media" }
+            - { name: S3_PREFIX, value: "agency/" }
+            - { name: S3_ENDPOINT, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ENDPOINT, optional: true } } }
+            - { name: S3_ACCESS_KEY_ID, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ACCESS_KEY_ID, optional: true } } }
+            - { name: S3_SECRET_ACCESS_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_SECRET_ACCESS_KEY, optional: true } } }
           resources:
             requests: { cpu: 50m, memory: 192Mi }
             limits: { memory: 384Mi }
@@ -149,6 +155,12 @@ spec:
             - { name: JWT_SECRET_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: JWT_SECRET_KEY } } }
             - { name: TAVILY_API_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: TAVILY_API_KEY } } }
             - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: EV_RESEARCH_GATEWAY_SECRET } } }
+            - { name: S3_REGION, value: "eu-paris-1" }
+            - { name: S3_BUCKET, value: "dev-agency-media" }
+            - { name: S3_PREFIX, value: "agency/" }
+            - { name: S3_ENDPOINT, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ENDPOINT, optional: true } } }
+            - { name: S3_ACCESS_KEY_ID, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ACCESS_KEY_ID, optional: true } } }
+            - { name: S3_SECRET_ACCESS_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_SECRET_ACCESS_KEY, optional: true } } }
           resources:
             requests: { cpu: 50m, memory: 320Mi }
             limits: { memory: 640Mi }

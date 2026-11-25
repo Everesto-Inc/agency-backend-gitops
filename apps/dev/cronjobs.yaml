@@ -40,6 +40,12 @@ spec:
                     - { name: EVAL_USER_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: EVAL_USER_EMAIL } } }
                     - { name: EVAL_USER_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: EVAL_USER_PASSWORD } } }
                     - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: QUALITY_GATEWAY_SECRET } } }
+                    - { name: S3_REGION, value: "eu-paris-1" }
+                    - { name: S3_BUCKET, value: "dev-agency-media" }
+                    - { name: S3_PREFIX, value: "agency/" }
+                    - { name: S3_ENDPOINT, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ENDPOINT, optional: true } } }
+                    - { name: S3_ACCESS_KEY_ID, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ACCESS_KEY_ID, optional: true } } }
+                    - { name: S3_SECRET_ACCESS_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_SECRET_ACCESS_KEY, optional: true } } }
               resources:
                 requests: { cpu: 25m, memory: 64Mi }
                 limits: { memory: 256Mi }
@@ -89,6 +95,12 @@ spec:
                     - { name: EVAL_USER_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: EVAL_USER_EMAIL } } }
                     - { name: EVAL_USER_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: EVAL_USER_PASSWORD } } }
                     - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: QUALITY_GATEWAY_SECRET } } }
+                    - { name: S3_REGION, value: "eu-paris-1" }
+                    - { name: S3_BUCKET, value: "dev-agency-media" }
+                    - { name: S3_PREFIX, value: "agency/" }
+                    - { name: S3_ENDPOINT, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ENDPOINT, optional: true } } }
+                    - { name: S3_ACCESS_KEY_ID, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ACCESS_KEY_ID, optional: true } } }
+                    - { name: S3_SECRET_ACCESS_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_SECRET_ACCESS_KEY, optional: true } } }
               resources:
                 requests: { cpu: 25m, memory: 64Mi }
                 limits: { memory: 256Mi }
@@ -138,6 +150,12 @@ spec:
                     - { name: EVAL_USER_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: EVAL_USER_EMAIL } } }
                     - { name: EVAL_USER_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: EVAL_USER_PASSWORD } } }
                     - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: QUALITY_GATEWAY_SECRET } } }
+                    - { name: S3_REGION, value: "eu-paris-1" }
+                    - { name: S3_BUCKET, value: "dev-agency-media" }
+                    - { name: S3_PREFIX, value: "agency/" }
+                    - { name: S3_ENDPOINT, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ENDPOINT, optional: true } } }
+                    - { name: S3_ACCESS_KEY_ID, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ACCESS_KEY_ID, optional: true } } }
+                    - { name: S3_SECRET_ACCESS_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_SECRET_ACCESS_KEY, optional: true } } }
               resources:
                 requests: { cpu: 25m, memory: 64Mi }
                 limits: { memory: 256Mi }

@@ -11,6 +11,8 @@ spec:
   template:
     metadata:
       labels: { app: edge-gateway, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
+      # Alloy on the control-plane discovers pods with these (ansible 03_install_grafana_alloy) → Prometheus
+      annotations: { prometheus.io/scrape: "true", prometheus.io/port: "8000", prometheus.io/path: /metrics }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
@@ -72,6 +74,8 @@ spec:
   template:
     metadata:
       labels: { app: model-gateway, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
+      # Alloy on the control-plane discovers pods with these (ansible 03_install_grafana_alloy) → Prometheus
+      annotations: { prometheus.io/scrape: "true", prometheus.io/port: "8000", prometheus.io/path: /metrics }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
@@ -131,6 +135,8 @@ spec:
   template:
     metadata:
       labels: { app: topic-ev-research, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
+      # Alloy on the control-plane discovers pods with these (ansible 03_install_grafana_alloy) → Prometheus
+      annotations: { prometheus.io/scrape: "true", prometheus.io/port: "8000", prometheus.io/path: /metrics }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
@@ -191,6 +197,8 @@ spec:
   template:
     metadata:
       labels: { app: topic-product-finder, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
+      # Alloy on the control-plane discovers pods with these (ansible 03_install_grafana_alloy) → Prometheus
+      annotations: { prometheus.io/scrape: "true", prometheus.io/port: "8000", prometheus.io/path: /metrics }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
@@ -245,6 +253,8 @@ spec:
   template:
     metadata:
       labels: { app: topic-finance, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
+      # Alloy on the control-plane discovers pods with these (ansible 03_install_grafana_alloy) → Prometheus
+      annotations: { prometheus.io/scrape: "true", prometheus.io/port: "8000", prometheus.io/path: /metrics }
     spec:
       nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
       securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }

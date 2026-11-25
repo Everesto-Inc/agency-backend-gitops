@@ -8,9 +8,15 @@ spec:
   rules:
     - host: agency-backend-dev.everesto.live
       http:
-        paths:
-          - path: /
+        paths:   # the API + its docs only — /metrics, /healthz… stay in-cluster
+          - path: /api
             pathType: Prefix
+            backend: { service: { name: edge-gateway, port: { number: 8000 } } }
+          - path: /docs
+            pathType: Prefix
+            backend: { service: { name: edge-gateway, port: { number: 8000 } } }
+          - path: /openapi.json
+            pathType: Exact
             backend: { service: { name: edge-gateway, port: { number: 8000 } } }
 ---
 # https://agency-dev.everesto.live/api → the API on the SAME address as the web app (agency-frontend serves "/"):

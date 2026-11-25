@@ -12,3 +12,19 @@ spec:
           - path: /
             pathType: Prefix
             backend: { service: { name: edge-gateway, port: { number: 8000 } } }
+---
+# https://agency-dev.everesto.live/api → the API on the SAME address as the web app (agency-frontend serves "/"):
+# the browser calls its own origin → no CORS. Matches the alb rule *-dev.everesto.live — no alb change.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agency-api
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: agency-dev.everesto.live
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: edge-gateway, port: { number: 8000 } } }

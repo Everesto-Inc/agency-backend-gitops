@@ -2,18 +2,20 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: quality-online-judge
-  labels: { app: quality-worker, app.kubernetes.io/part-of: agency }
+  labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }   # Backstage: CD tab → Scheduled jobs
 spec:
   schedule: "5 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
   jobTemplate:
+    metadata:
+      labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       backoffLimit: 1
       template:
         metadata:
-          labels: { app: quality-worker, app.kubernetes.io/part-of: agency }
+          labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
         spec:
           restartPolicy: Never
           nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
@@ -57,18 +59,20 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: quality-drift
-  labels: { app: quality-worker, app.kubernetes.io/part-of: agency }
+  labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }   # Backstage: CD tab → Scheduled jobs
 spec:
   schedule: "20 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
   jobTemplate:
+    metadata:
+      labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       backoffLimit: 1
       template:
         metadata:
-          labels: { app: quality-worker, app.kubernetes.io/part-of: agency }
+          labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
         spec:
           restartPolicy: Never
           nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
@@ -112,18 +116,20 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: quality-retention
-  labels: { app: quality-worker, app.kubernetes.io/part-of: agency }
+  labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }   # Backstage: CD tab → Scheduled jobs
 spec:
   schedule: "30 3 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
   jobTemplate:
+    metadata:
+      labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       backoffLimit: 1
       template:
         metadata:
-          labels: { app: quality-worker, app.kubernetes.io/part-of: agency }
+          labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
         spec:
           restartPolicy: Never
           nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
@@ -167,18 +173,20 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: agency-experiments
-  labels: { app: quality-worker, app.kubernetes.io/part-of: agency }
+  labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }   # Backstage: CD tab → Scheduled jobs
 spec:
   schedule: "*/2 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
   jobTemplate:
+    metadata:
+      labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
     spec:
       backoffLimit: 1
       template:
         metadata:
-          labels: { app: quality-worker, app.kubernetes.io/part-of: agency }
+          labels: { app: quality-worker, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
         spec:
           restartPolicy: Never
           nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
@@ -205,6 +213,59 @@ spec:
                     - { name: EVAL_USER_EMAIL, valueFrom: { secretKeyRef: { name: agency-backend, key: EVAL_USER_EMAIL } } }
                     - { name: EVAL_USER_PASSWORD, valueFrom: { secretKeyRef: { name: agency-backend, key: EVAL_USER_PASSWORD } } }
                     - { name: MODEL_GATEWAY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: agency-backend, key: QUALITY_GATEWAY_SECRET } } }
+                    - { name: S3_REGION, value: "eu-paris-1" }
+                    - { name: S3_BUCKET, value: "dev-agency-media" }
+                    - { name: S3_PREFIX, value: "agency/" }
+                    - { name: S3_ENDPOINT, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ENDPOINT, optional: true } } }
+                    - { name: S3_ACCESS_KEY_ID, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_ACCESS_KEY_ID, optional: true } } }
+                    - { name: S3_SECRET_ACCESS_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: S3_SECRET_ACCESS_KEY, optional: true } } }
+              resources:
+                requests: { cpu: 25m, memory: 64Mi }
+                limits: { memory: 256Mi }
+              securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+              volumeMounts: [{ name: tmp, mountPath: /tmp }]
+          volumes: [{ name: tmp, emptyDir: { sizeLimit: 64Mi } }]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ev-kb-refresh
+  labels: { app: topic-ev-research, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }   # Backstage: CD tab → Scheduled jobs
+spec:
+  schedule: "15 4 * * 1"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    metadata:
+      labels: { app: topic-ev-research, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels: { app: topic-ev-research, everesto.live/app: agency-backend, app.kubernetes.io/part-of: agency }
+        spec:
+          restartPolicy: Never
+          nodeSelector: { node-role.kubernetes.io/control-plane: "true" }   # agency runs on the control-plane (platform exception, 3 GiB quota)
+          securityContext: { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: RuntimeDefault } }
+          automountServiceAccountToken: false
+          containers:
+            - name: job
+              image: ghcr.io/everesto-inc/agency-topic-ev-research
+              command: ["python", "-m", "ev_research.kb"]
+              env:
+                    - { name: SERVICE_NAME, value: "topic-ev-research" }
+                    - { name: ENVIRONMENT, value: "dev" }
+                    - { name: LOG_LEVEL, value: "INFO" }
+                    - { name: LOG_JSON, value: "true" }
+                    - { name: CONFIG_DIR, value: "/app/config" }
+                    - { name: PROMPTS_DIR, value: "/app/prompts" }
+                    - { name: MODEL_GATEWAY_URL, value: "http://model-gateway:8000" }
+                    - { name: HOME, value: "/tmp" }
+                    - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: DATABASE_URL } } }
+                    - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_URL } } }
+                    - { name: REDIS_KEY_PREFIX, valueFrom: { secretKeyRef: { name: agency-backend, key: REDIS_KEY_PREFIX } } }
+                    - { name: JWT_SECRET_KEY, valueFrom: { secretKeyRef: { name: agency-backend, key: JWT_SECRET_KEY } } }
                     - { name: S3_REGION, value: "eu-paris-1" }
                     - { name: S3_BUCKET, value: "dev-agency-media" }
                     - { name: S3_PREFIX, value: "agency/" }
